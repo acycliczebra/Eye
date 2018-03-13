@@ -1,0 +1,11 @@
+out/
+build/
+.waf*
+
+.lock-*
+waf-2.0.6/
+*.dblite
+
+
+__pycache__
+*.pyo
