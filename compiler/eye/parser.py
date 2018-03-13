@@ -126,6 +126,30 @@ def ignore(accept):
         return tokens, Tokens.IGNORE
     return f
 
+
+def interlace(accept, delimeter):
+    def f(tokens):
+
+        results = []
+        tokens, result = accept(tokens)
+        if result == Tokens.NONE:
+            return tokens, Tokens.NONE
+        elif result == Tokens.IGNORE:
+            pass
+        else:
+            results += [result]
+
+        while True:
+            tokens, result = all_of(delimeter, accept)(tokens)
+            if result == Tokens.NONE:
+                break
+
+            results += [result[-1]]
+
+        return tokens, results
+    return f
+
+
 #TODO: I don't think these are right
 supress_many_or_zero = lambda accept: supress(many_of(accept))
 ignore_many = lambda accept: ignore(many_of(accept))
@@ -159,20 +183,21 @@ accept_right_square = accept_token('R_SQUARE')
 
 def accept_statement_list(tokens):
 
-    tokens, statements = many_of(
-        all_of(
-            accept_statement,
-            supress(accept_nl), #sandwitch nl in statments
-        )
+    tokens, statements = interlace(
+        accept_statement,
+        many_of(accept_nl)
     )(tokens)
 
     return tokens, statements
 
 def accept_function_args(tokens):
 
-    tokens, ids = all_of(
+    tokens, [ids] = all_of(
         supress(accept_left_square),
-        accept_id, #TODO: accept many
+        interlace(
+            accept_id,
+            accept_comma
+        ),
         supress(accept_right_square),
     )(tokens)
 
