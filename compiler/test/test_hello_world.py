@@ -1,7 +1,7 @@
-#! /usr/bin/python3
 
+import unittest
 
-import eye
+import compiler
 
 
 expected = '''
@@ -42,6 +42,6 @@ test = '''def __main__ [args]{
 }
 '''
 
+result = compiler.compile(test)
 
-if __name__ == '__main__':
-    eye.compile(test)
+print(result)
