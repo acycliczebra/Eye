@@ -124,6 +124,5 @@ def tokenize(line):
     tokens = _nulls_filter_tokenizer(tokens)
     tokens = _tag_tokens_with_position(tokens)
     tokens = list(tokens)
-    print(tokens)
 
     return tokens

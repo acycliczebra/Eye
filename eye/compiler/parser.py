@@ -1,15 +1,20 @@
-
+import logging
 import json
 
 class ParserError(Exception):
     pass
 
-class Syntax:
-    pass
 
 class Tokens:
     NONE = 'NONE'
     IGNORE = 'IGNORE'
+
+class TokenBuffer:
+    def __init__(self, tokens):
+        self.tokens = tokens[:]
+        self.pointer = 0
+
+    #TODO: add increment, decrement and access, and to_bool
 
 def any_of(*accepts):
     def f(tokens):
@@ -121,14 +126,14 @@ def accept_token(token_type):
 
 def debug_accept(accept):
     def f(tokens):
-        print('accepting: ', accept.__name__, tokens[0] if tokens else 'EOF')
+        logging.debug('accepting: %s -> %s', accept.__name__, tokens[0] if tokens else 'EOF')
         tokens, result = accept(tokens)
         if result == Tokens.NONE:
-            print('failed: ', accept.__name__)
+            logging.debug('failed: %s', accept.__name__)
         elif result == Tokens.IGNORE:
-            print('ignored: ', accept.__name__)
+            logging.debug('ignored: %s', accept.__name__)
         else:
-            print('accepted: ', accept.__name__, result)
+            logging.debug('accepted: %s -> %s', accept.__name__, result)
 
         return tokens, result
 
@@ -304,10 +309,7 @@ def parse(tokens):
 
     result = {
         "version": "0.0.1",
-        "statments": statements
+        "statements": statements
     }
 
-    print('RESULT')
-    print(json.dumps(result, indent=2))
-
-    return statements, tokens
+    return result

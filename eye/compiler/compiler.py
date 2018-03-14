@@ -1,4 +1,6 @@
 
+import json
+
 from . import tokenizer
 from . import parser
 
@@ -51,9 +53,10 @@ def lexer(s):
 
 def parse(tokens):
     ast = parser.parse(tokens)
+    return ast
 
 
 def compile(s):
     tokens = lexer(s)
     ast = parse(tokens)
-    return ''
+    return json.dumps(ast, indent=2)
