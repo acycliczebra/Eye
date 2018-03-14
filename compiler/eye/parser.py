@@ -11,56 +11,6 @@ class Tokens:
     NONE = 'NONE'
     IGNORE = 'IGNORE'
 
-
-def _bracket_parser(tokens):
-    def helper(tokens, stack, i):
-        res = []
-        while i < len(tokens):
-            token = tokens[i]
-            type = token['type']
-            if 'L_' in type:
-                stack += [type]
-                new_tokens, stack, i = helper(tokens, stack, i+1)
-
-                res += [[token] + new_tokens]
-            elif 'R_' in type:
-                corresponding = type.replace('R_', 'L_')
-                if not stack or stack[-1] != corresponding:
-                    raise ParserError('mismatched brackets')
-                stack = stack[:-1]
-
-                res += [token]
-                return res, stack, i
-            else:
-                res += [token]
-            i += 1
-        return res, stack, i
-
-    expected_i = len(tokens)
-    tokens, stack, i = helper(tokens, [], 0)
-
-    if stack:
-        raise ParserError('mismatched brackets')
-    if i != expected_i:
-        raise ParserError('mismatched brackets')
-
-    return tokens
-
-
-def _parse(tokens):
-    def print_tokens(tokens, depth=0):
-        for token in tokens:
-            if isinstance(token, list):
-                print_tokens(token, depth=depth+1)
-            else:
-                print('\t' * depth, token)
-
-    tokens = _bracket_parser(tokens)
-
-    print_tokens(tokens)
-
-    return []
-
 def any_of(*accepts):
     def f(tokens):
 
@@ -169,18 +119,49 @@ def accept_token(token_type):
         return tokens, Tokens.NONE
     return f
 
-accept_def = accept_token('DEF')
-accept_id = accept_token('ID')
-accept_ws = accept_token('WS')
-accept_nl = accept_token('NL')
-accept_comma = accept_token('COMMA')
+def debug_accept(accept):
+    def f(tokens):
+        print('accepting: ', accept.__name__, tokens[0] if tokens else 'EOF')
+        tokens, result = accept(tokens)
+        if result == Tokens.NONE:
+            print('failed: ', accept.__name__)
+        elif result == Tokens.IGNORE:
+            print('ignored: ', accept.__name__)
+        else:
+            print('accepted: ', accept.__name__, result)
 
-accept_left_curly = accept_token('L_CURLY')
-accept_right_curly = accept_token('R_CURLY')
-accept_left_square = accept_token('L_SQUARE')
-accept_right_square = accept_token('R_SQUARE')
+        return tokens, result
 
+    return f
 
+@debug_accept
+def accept_def(tokens): return accept_token('DEF')(tokens)
+@debug_accept
+def accept_id(tokens): return accept_token('ID')(tokens)
+@debug_accept
+def accept_ws(tokens): return accept_token('WS')(tokens)
+@debug_accept
+def accept_nl(tokens): return accept_token('NL')(tokens)
+@debug_accept
+def accept_comma(tokens): return accept_token('COMMA')(tokens)
+
+@debug_accept
+def accept_left_curly(tokens): return accept_token('L_CURLY')(tokens)
+@debug_accept
+def accept_right_curly(tokens): return accept_token('R_CURLY')(tokens)
+@debug_accept
+def accept_left_square(tokens): return accept_token('L_SQUARE')(tokens)
+@debug_accept
+def accept_right_square(tokens): return accept_token('R_SQUARE')(tokens)
+@debug_accept
+def accept_left_paren(tokens): return accept_token('L_PAREN')(tokens)
+@debug_accept
+def accept_right_paren(tokens): return accept_token('R_PAREN')(tokens)
+
+@debug_accept
+def accept_string_literal(tokens): return accept_token('STRING')(tokens)
+
+@debug_accept
 def accept_statement_list(tokens):
 
     tokens, statements = interlace(
@@ -190,30 +171,41 @@ def accept_statement_list(tokens):
 
     return tokens, statements
 
+@debug_accept
 def accept_function_args(tokens):
 
-    tokens, [ids] = all_of(
+    tokens, result = all_of(
         supress(accept_left_square),
-        interlace(
+        interlace( #TODO: maybe id
             accept_id,
             accept_comma
         ),
         supress(accept_right_square),
     )(tokens)
 
+    if result == Tokens.NONE:
+        return tokens, Tokens.NONE
+
+    [ids] = result
     ids = [x['value'] for x in ids]
 
     return tokens, ids
 
+@debug_accept
 def accept_lambda_expression(tokens):
-    tokens, [args, statements] = all_of(
+    tokens, result = all_of(
         accept_function_args,
         supress(accept_left_curly),
         ignore_many(accept_nl),
-        accept_statement_list,
+        accept_statement_list, #TODO: maybe statement_list
         ignore_many(accept_nl),
         supress(accept_right_curly),
     )(tokens)
+
+    if result == Tokens.NONE:
+        return tokens, Tokens.NONE
+
+    [args, statements] = result
 
     return tokens, {
         'type': 'lambda_expression',
@@ -221,23 +213,50 @@ def accept_lambda_expression(tokens):
         'statements': statements,
     }
 
+@debug_accept
 def accept_expression(tokens):
 
     tokens, expression = any_of(
-        accept_lambda_expression
+        accept_lambda_expression,
+        accept_id,
+        accept_string_literal,
     )(tokens)
 
     return tokens, expression
 
-# accept_expression = accept_token('EXPRESSION')
-accept_function_call_statement = accept_token('CALL')
+@debug_accept
+def accept_function_call_statement(tokens):
 
+    tokens, result = all_of(
+        accept_expression,
+        supress(accept_left_paren),
+        interlace(
+            accept_expression,
+            accept_comma
+        ),
+        supress(accept_right_paren),
+        supress(accept_nl)
+    )(tokens)
+
+    if result == Tokens.NONE:
+        return tokens, Tokens.NONE
+
+    [function, parameters] = result
+
+    return tokens, {
+        'type': 'function_call_statement',
+        'function': function,
+        'parameters': parameters,
+    }
+
+@debug_accept
 def accept_declaration_statement(tokens):
 
     tokens, result = all_of(
         accept_def,
         accept_id,
         accept_expression,
+        supress(accept_nl)
     )(tokens)
 
     if result == Tokens.NONE:
@@ -252,6 +271,7 @@ def accept_declaration_statement(tokens):
     }
 
 
+@debug_accept
 def accept_statement(tokens):
 
     tokens, statement = any_of(
@@ -261,6 +281,7 @@ def accept_statement(tokens):
 
     return tokens, statement
 
+@debug_accept
 def accept_top_level(tokens):
     tokens, statements = many_of(
         all_of(

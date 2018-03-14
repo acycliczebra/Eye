@@ -3,11 +3,6 @@
 
 import eye
 
-test = '''
-def __main__[args] {
-    print("Hello World")
-}
-'''
 
 expected = '''
 {
@@ -23,12 +18,15 @@ expected = '''
         ],
         "statements": [
           {
-            "type": "function_call_statment",
-            "function": "print",
+            "type": "function_call_statement",
+            "function": {
+              "type": "id",
+              "value": "print"
+            },
             "parameters": [
               {
-                "type": "string_literal",
-                "value": "Hello World"
+                "type": "string",
+                "value": "\"Hello World\""
               }
             ]
           }
@@ -40,8 +38,9 @@ expected = '''
 '''
 
 test = '''def __main__ [args]{
-    call
-}'''
+    print("Hello World")
+}
+'''
 
 
 if __name__ == '__main__':

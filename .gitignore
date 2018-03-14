@@ -9,3 +9,5 @@ waf-2.0.6/
 
 __pycache__
 *.pyo
+
+.vscode
