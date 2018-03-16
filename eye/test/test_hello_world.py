@@ -55,6 +55,17 @@ class TestHelloWorld(unittest.TestCase):
 
         self.assertEqual(result, self.expected)
 
+    def test_no_args_standard(self):
+        test = r'''def __main__ []{
+            print("Hello World")
+        }
+        '''
+
+        logging.basicConfig(level=logging.DEBUG)
+        result = compiler.compile(test)
+
+        self.assertEqual(result, self.expected)
+
 
 if __name__ == '__main__':
     unittest.main()
