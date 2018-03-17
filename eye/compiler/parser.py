@@ -81,6 +81,14 @@ def ignore(accept):
         return tokens, Tokens.IGNORE
     return f
 
+def no_leading_nl(accept):
+    def f(tokens):
+        _, token = get_first_token(tokens, ignore=['WS', 'COMMENT'])
+        if token == 'NL':
+            return tokens, Tokens.IGNORE
+        tokens, result = accept(tokens)
+        return tokens, result
+    return f
 
 def interlace(accept, delimeter):
     def f(tokens):
@@ -110,15 +118,40 @@ supress_many_or_zero = lambda accept: supress(many_of(accept))
 ignore_many = lambda accept: ignore(many_of(accept))
 supress_many = lambda accept: all_of(supress(accept), supress_many(accept))
 
-def accept_token(token_type):
+
+def get_first_token(tokens, ignore=None):
+    if ignore == None:
+        ignore = ['WS', 'NL', 'COMMENT']
+
+    i = 0
+    try:
+        while tokens[i]['type'] in ignore:
+            i += 1
+    except IndexError:
+        return tokens, None
+
+    return tokens[i+1:], tokens[i]
+
+
+def accept_token(types, ignore=None):
+    if ignore == None:
+        ignore = ['WS', 'NL', 'COMMENT']
+
     def f(tokens):
-        if not tokens:
+        next_tokens, next_token = get_first_token(tokens, ignore)
+
+        if isinstance(types, str):
+            my_types = [types]
+        elif isinstance(types, list):
+            my_types = types
+
+        if next_token is None:
             return tokens, Tokens.NONE
 
-        if tokens[0]['type'] == token_type:
-            return tokens[1:], {
-                'type': token_type.lower(),
-                'value': tokens[0]['text'],
+        if next_token['type'] in my_types:
+            return next_tokens, {
+                'type': next_token['type'].lower(),
+                'value': next_token['text'],
             }
 
         return tokens, Tokens.NONE
@@ -201,9 +234,7 @@ def accept_lambda_expression(tokens):
     tokens, result = all_of(
         accept_function_args,
         supress(accept_left_curly),
-        ignore_many(accept_nl),
         accept_statement_list, #TODO: maybe statement_list
-        ignore_many(accept_nl),
         supress(accept_right_curly),
     )(tokens)
 
@@ -240,7 +271,6 @@ def accept_function_call_statement(tokens):
             accept_comma
         ),
         supress(accept_right_paren),
-        supress(accept_nl)
     )(tokens)
 
     if result == Tokens.NONE:
@@ -259,9 +289,8 @@ def accept_declaration_statement(tokens):
 
     tokens, result = all_of(
         accept_def,
-        accept_id,
-        accept_expression,
-        supress(accept_nl)
+        no_leading_nl(accept_id),
+        no_leading_nl(accept_expression),
     )(tokens)
 
     if result == Tokens.NONE:
@@ -288,22 +317,12 @@ def accept_statement(tokens):
 
 @debug_accept
 def accept_top_level(tokens):
-    tokens, statements = many_of(
-        all_of(
-            accept_statement,
-            supress(accept_nl),
-        )
-    )(tokens)
 
-    statements = [x[0] for x in statements]
+    tokens, statements = accept_statement_list(tokens)
 
     return tokens, statements
 
 def parse(tokens):
-
-    # remove whitespace
-    tokens = [token for token in tokens if token['type'] != 'WS']
-    tokens = [token for token in tokens if token['type'] != 'COMMENT']
 
     tokens, statements = accept_top_level(tokens)
 

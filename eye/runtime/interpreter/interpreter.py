@@ -119,7 +119,6 @@ def start_app(symbol_table):
     pass
 
 def interpret(ast):
-    ast = json.loads(ast)
 
     version = ast['version']
     start = ast['statements']

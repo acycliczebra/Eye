@@ -59,4 +59,5 @@ def parse(tokens):
 def compile(s):
     tokens = lexer(s)
     ast = parse(tokens)
-    return json.dumps(ast, indent=2)
+    #return json.dumps(ast, indent=2)
+    return ast
