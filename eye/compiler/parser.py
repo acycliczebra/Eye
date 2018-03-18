@@ -157,16 +157,33 @@ def accept_token(types, ignore=None):
         return tokens, Tokens.NONE
     return f
 
+g_indent = 0
+
 def debug_accept(accept):
     def f(tokens):
-        logging.debug('accepting: %s -> %s', accept.__name__, tokens[0] if tokens else 'EOF')
-        tokens, result = accept(tokens)
-        if result == Tokens.NONE:
-            logging.debug('failed: %s', accept.__name__)
-        elif result == Tokens.IGNORE:
-            logging.debug('ignored: %s', accept.__name__)
+        global g_indent
+
+        if g_indent == 0:
+            indentation = ' '
         else:
-            logging.debug('accepted: %s -> %s', accept.__name__, result)
+            indentation = (g_indent - 1) * ' '  + '< '
+
+        logging.debug('%saccepting: %s -> %s', indentation, accept.__name__, get_first_token(tokens)[1])
+        g_indent += 1
+        tokens, result = accept(tokens)
+        g_indent -= 1
+
+        if g_indent == 0:
+            indentation = ' '
+        else:
+            indentation = (g_indent - 1) * ' '  + '> '
+
+        if result == Tokens.NONE:
+            logging.debug('%sfailed: %s', indentation, accept.__name__)
+        elif result == Tokens.IGNORE:
+            logging.debug('%signored: %s', indentation, accept.__name__)
+        else:
+            logging.debug('%saccepted: %s -> %s', indentation, accept.__name__, result)
 
         return tokens, result
 
@@ -261,7 +278,7 @@ def accept_expression(tokens):
     return tokens, expression
 
 @debug_accept
-def accept_function_call_statement(tokens):
+def accept_function_call_expression(tokens):
 
     tokens, result = all_of(
         accept_expression,
@@ -279,8 +296,8 @@ def accept_function_call_statement(tokens):
     [function, parameters] = result
 
     return tokens, {
-        'type': 'function_call_statement',
-        'function': function,
+        'type': 'function_call_expression',
+        'function': function['value'] if function['type'] == 'id' else function,
         'parameters': parameters,
     }
 
@@ -310,7 +327,7 @@ def accept_statement(tokens):
 
     tokens, statement = any_of(
         accept_declaration_statement,
-        accept_function_call_statement
+        accept_function_call_expression
     )(tokens)
 
     return tokens, statement

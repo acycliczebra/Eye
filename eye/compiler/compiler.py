@@ -33,6 +33,7 @@ class Program:
     def tokens(self):
         res = []
         lines = [(lineno, line.tokens) for lineno, line in self.lines]
+        count = 0
         for lineno, line in lines:
             for type, s, pos in line:
                 token = {
@@ -42,7 +43,9 @@ class Program:
                         'lineno': lineno,
                         'position': pos,
                     },
+                    'id': count,
                 }
+                count += 1
                 res += [token]
         return res
 

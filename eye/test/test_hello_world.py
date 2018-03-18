@@ -21,11 +21,8 @@ class TestHelloWorld(unittest.TestCase):
                   ],
                   "statements": [
                     {
-                      "type": "function_call_statement",
-                      "function": {
-                        "type": "id",
-                        "value": "print"
-                      },
+                      "type": "function_call_expression",
+                      "function": "print",
                       "parameters": [
                         {
                           "type": "string",
