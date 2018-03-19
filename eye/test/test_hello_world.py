@@ -7,8 +7,7 @@ import compiler
 
 class TestHelloWorld(unittest.TestCase):
     def setUp(self):
-        json_source = r'''
-          {
+        self.expected = {
             "version": "0.0.1",
             "statements": [
               {
@@ -35,12 +34,6 @@ class TestHelloWorld(unittest.TestCase):
               }
             ]
           }
-        '''
-
-
-        self.expected_json = json.loads(json_source)
-        #self.expected = json.dumps(self.expected_json, indent=2)
-        self.expected = self.expected_json
 
     def test_standard(self):
         test = r'''def __main__ [args]{

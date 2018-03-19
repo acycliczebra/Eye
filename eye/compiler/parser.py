@@ -221,6 +221,15 @@ def accept_string_literal(tokens): return accept_token('STRING')(tokens)
 def accept_number(tokens): return accept_token('NUMBER')(tokens)
 
 @debug_accept
+def accept_plus(tokens): return accept_token('PLUS')(tokens)
+@debug_accept
+def accept_minus(tokens): return accept_token('MINUS')(tokens)
+@debug_accept
+def accept_star(tokens): return accept_token('STAR')(tokens)
+@debug_accept
+def accept_slash(tokens): return accept_token('SLASH')(tokens)
+
+@debug_accept
 def accept_statement_list(tokens):
 
     tokens, statements = interlace(
@@ -290,7 +299,7 @@ def accept_function_call(tokens):
     return tokens, parameters
 
 @debug_accept
-def accept_expression(tokens):
+def accept_atom_expression(tokens):
 
     tokens, expression = any_of(
         accept_lambda_expression,
@@ -321,6 +330,27 @@ def accept_expression(tokens):
 
     return tokens, prev_result
 
+@debug_accept
+def accept_expression(tokens):
+    tokens, expression = any_of(
+        accept_atom_expression,
+    )(tokens)
+
+    tokens, plus_other = all_of(
+        accept_plus,
+        accept_atom_expression
+    )(tokens)
+
+    if plus_other == Tokens.NONE:
+        return tokens, expression
+
+    [_, plus_other] = plus_other
+
+    return tokens, {
+        'type': 'function_call_expression',
+        'function': '__add__',
+        'parameters': [expression, plus_other]
+    }
 
 @debug_accept
 def accept_declaration_statement(tokens):

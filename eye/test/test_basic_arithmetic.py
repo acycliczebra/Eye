@@ -121,6 +121,8 @@ class TestBasicArithmetic(unittest.TestCase):
         #logging.basicConfig(level=logging.DEBUG)
         result = compiler.compile(test)
 
+        #print(json.dumps(result, indent=2))
+
         self.assertEqual(result, expected)
 
 
