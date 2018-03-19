@@ -199,6 +199,8 @@ def accept_ws(tokens): return accept_token('WS')(tokens)
 def accept_nl(tokens): return accept_token('NL')(tokens)
 @debug_accept
 def accept_comma(tokens): return accept_token('COMMA')(tokens)
+@debug_accept
+def accept_equal(tokens): return accept_token('EQUAL')(tokens)
 
 @debug_accept
 def accept_left_curly(tokens): return accept_token('L_CURLY')(tokens)
@@ -215,6 +217,8 @@ def accept_right_paren(tokens): return accept_token('R_PAREN')(tokens)
 
 @debug_accept
 def accept_string_literal(tokens): return accept_token('STRING')(tokens)
+@debug_accept
+def accept_number(tokens): return accept_token('NUMBER')(tokens)
 
 @debug_accept
 def accept_statement_list(tokens):
@@ -273,6 +277,7 @@ def accept_expression(tokens):
         accept_lambda_expression,
         accept_id,
         accept_string_literal,
+        accept_number,
     )(tokens)
 
     return tokens, expression
@@ -321,13 +326,32 @@ def accept_declaration_statement(tokens):
         'value': value,
     }
 
+@debug_accept
+def accept_assignment_statement(tokens):
+    tokens, result = all_of(
+        accept_id,
+        no_leading_nl(accept_equal),
+        no_leading_nl(accept_expression),
+    )(tokens)
+
+    if result == Tokens.NONE:
+        return tokens, Tokens.NONE
+
+    [id, _, value] = result
+
+    return tokens, {
+        'type': 'assignment_statement',
+        'to': id,
+        'value': value,
+    }
 
 @debug_accept
 def accept_statement(tokens):
 
     tokens, statement = any_of(
         accept_declaration_statement,
-        accept_function_call_expression
+        accept_assignment_statement,
+        accept_function_call_expression,
     )(tokens)
 
     return tokens, statement

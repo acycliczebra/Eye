@@ -29,7 +29,7 @@ class TestBasicArithmetic(unittest.TestCase):
                                 },
                                 "value": {
                                     "type": "number",
-                                    "value": "2"
+                                    "value": "4"
                                 }
                             },
                             {

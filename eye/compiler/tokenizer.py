@@ -33,6 +33,11 @@ _identifier_tokenizer = _regex_tokenizer_builder(
     'ID'
 )
 
+_number_tokenizer = _regex_tokenizer_builder(
+    re.compile(r'^(.*?)([0-9]+)(.*)$'),
+    'NUMBER'
+)
+
 _whitespace_tokenizer = _regex_tokenizer_builder(
     re.compile(r'^(.*?)([ \t\r\f\v]+)(.*)$'),
     'WS'
@@ -96,6 +101,14 @@ def _operator_tokenizer(tokens):
                 yield ('EQUAL', s)
             elif s == ',':
                 yield ('COMMA', s)
+            elif s == '*':
+                yield ('STAR', s)
+            elif s == '+':
+                yield ('PLUS', s)
+            elif s == '-':
+                yield ('MINUS', s)
+            elif s == '/':
+                yield ('SLASH', s)
             else:
                 yield('?', s)
 
@@ -116,6 +129,7 @@ def tokenize(line):
     tokens = _string_tokenizer(tokens)
     tokens = _comment_tokenizer(tokens)
     tokens = _identifier_tokenizer(tokens)
+    tokens = _number_tokenizer(tokens)
     tokens = _keyword_tokenizer(tokens)
     tokens = _whitespace_tokenizer(tokens)
 
