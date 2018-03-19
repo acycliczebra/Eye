@@ -1,5 +1,6 @@
 
 import compiler
+import json
 from runtime import interpreter
 
 test = r'''def __main__ [args]{
@@ -8,6 +9,8 @@ test = r'''def __main__ [args]{
 '''
 
 ast = compiler.compile(test)
+
+print(json.dumps(ast, indent=2))
 
 ret_code = interpreter.interpret(ast)
 

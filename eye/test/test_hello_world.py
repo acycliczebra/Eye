@@ -47,7 +47,7 @@ class TestHelloWorld(unittest.TestCase):
             print("Hello World")
         }
         '''
-        #logging.basicConfig(level=logging.DEBUG)
+        logging.basicConfig(level=logging.DEBUG)
         result = compiler.compile(test)
 
         self.assertEqual(result, self.expected)

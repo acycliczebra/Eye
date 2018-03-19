@@ -271,22 +271,9 @@ def accept_lambda_expression(tokens):
     }
 
 @debug_accept
-def accept_expression(tokens):
-
-    tokens, expression = any_of(
-        accept_lambda_expression,
-        accept_id,
-        accept_string_literal,
-        accept_number,
-    )(tokens)
-
-    return tokens, expression
-
-@debug_accept
-def accept_function_call_expression(tokens):
+def accept_function_call(tokens):
 
     tokens, result = all_of(
-        accept_expression,
         supress(accept_left_paren),
         interlace(
             accept_expression,
@@ -298,13 +285,42 @@ def accept_function_call_expression(tokens):
     if result == Tokens.NONE:
         return tokens, Tokens.NONE
 
-    [function, parameters] = result
+    [parameters] = result
 
-    return tokens, {
-        'type': 'function_call_expression',
-        'function': function['value'] if function['type'] == 'id' else function,
-        'parameters': parameters,
-    }
+    return tokens, parameters
+
+@debug_accept
+def accept_expression(tokens):
+
+    tokens, expression = any_of(
+        accept_lambda_expression,
+        accept_id,
+        accept_string_literal,
+        accept_number,
+    )(tokens)
+
+    if expression == Tokens.NONE:
+        return tokens, Tokens.NONE
+
+    prev_result = expression
+
+    while tokens:
+
+        tokens, parameters = no_leading_nl(
+            accept_function_call
+        )(tokens)
+
+        if parameters == Tokens.NONE:
+            break
+
+        prev_result = {
+            'type': 'function_call_expression',
+            'function': prev_result['value'] if prev_result['type'] == 'id' else prev_result,
+            'parameters': parameters,
+        }
+
+    return tokens, prev_result
+
 
 @debug_accept
 def accept_declaration_statement(tokens):
@@ -351,7 +367,7 @@ def accept_statement(tokens):
     tokens, statement = any_of(
         accept_declaration_statement,
         accept_assignment_statement,
-        accept_function_call_expression,
+        accept_expression,
     )(tokens)
 
     return tokens, statement

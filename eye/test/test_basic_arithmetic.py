@@ -57,6 +57,7 @@ class TestBasicArithmetic(unittest.TestCase):
         #logging.basicConfig(level=logging.DEBUG)
         result = compiler.compile(test)
 
+
         self.assertEqual(result, expected)
 
     def test_two_plus_two(self):
