@@ -299,6 +299,22 @@ def accept_function_call(tokens):
     return tokens, parameters
 
 @debug_accept
+def accept_bracketted_expression(tokens):
+    tokens, expression = all_of(
+        supress(accept_left_paren),
+        accept_expression,
+        supress(accept_right_paren),
+    )(tokens)
+
+    if expression == Tokens.NONE:
+        return tokens, Tokens.NONE
+
+    [expression] = expression
+
+    return tokens, expression
+
+
+@debug_accept
 def accept_atom_expression(tokens):
 
     tokens, expression = any_of(
@@ -306,6 +322,7 @@ def accept_atom_expression(tokens):
         accept_id,
         accept_string_literal,
         accept_number,
+        accept_bracketted_expression,
     )(tokens)
 
     if expression == Tokens.NONE:

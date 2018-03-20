@@ -593,7 +593,7 @@ class TestBasicArithmetic(unittest.TestCase):
                                     "parameters": [
                                         {
                                             "type": "number",
-                                            "value": "9"
+                                            "value": "2"
                                         },
                                         {
                                             "type": "function_call_expression",
@@ -635,8 +635,8 @@ class TestBasicArithmetic(unittest.TestCase):
         }
         '''
 
+        #logging.basicConfig(level=logging.DEBUG)
         result = compiler.compile(test)
-
 
         self.assertEqual(result, expected)
 
