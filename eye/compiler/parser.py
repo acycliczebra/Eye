@@ -330,27 +330,92 @@ def accept_atom_expression(tokens):
 
     return tokens, prev_result
 
+
 @debug_accept
-def accept_expression(tokens):
-    tokens, expression = any_of(
+def accept_term_expression(tokens):
+
+    tokens, lhs = any_of(
         accept_atom_expression,
     )(tokens)
 
-    tokens, plus_other = all_of(
-        accept_plus,
-        accept_atom_expression
+    if lhs == Tokens.NONE:
+        return tokens, Tokens.NONE
+
+    prev_result = lhs
+
+    while tokens:
+
+        tokens, other = all_of(
+            any_of(
+                accept_star,
+                accept_slash,
+            ),
+            accept_atom_expression
+        )(tokens)
+
+
+        if other == Tokens.NONE:
+            break
+
+        [sign, rhs] = other
+
+        if sign['type'] == 'star':
+            function = '__mul__'
+        elif sign['type'] == 'slash':
+            function = '__div__'
+        else:
+            raise ParserError('invalid configuration')
+
+        prev_result = {
+            'type': 'function_call_expression',
+            'function': function,
+            'parameters': [prev_result, rhs],
+        }
+
+    return tokens, prev_result
+
+@debug_accept
+def accept_expression(tokens):
+
+    tokens, lhs = any_of(
+        accept_term_expression,
     )(tokens)
 
-    if plus_other == Tokens.NONE:
-        return tokens, expression
+    if lhs == Tokens.NONE:
+        return tokens, Tokens.NONE
 
-    [_, plus_other] = plus_other
+    prev_result = lhs
 
-    return tokens, {
-        'type': 'function_call_expression',
-        'function': '__add__',
-        'parameters': [expression, plus_other]
-    }
+    while tokens:
+
+        tokens, other = all_of(
+            any_of(
+                accept_plus,
+                accept_minus,
+            ),
+            accept_term_expression
+        )(tokens)
+
+
+        if other == Tokens.NONE:
+            break
+
+        [sign, rhs] = other
+
+        if sign['type'] == 'plus':
+            function = '__add__'
+        elif sign['type'] == 'minus':
+            function = '__sub__'
+        else:
+            raise ParserError('invalid configuration')
+
+        prev_result = {
+            'type': 'function_call_expression',
+            'function': function,
+            'parameters': [prev_result, rhs],
+        }
+
+    return tokens, prev_result
 
 @debug_accept
 def accept_declaration_statement(tokens):
