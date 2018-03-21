@@ -6,7 +6,8 @@ class ExecutionError(ValueError):
 
 
 class ASTObject:
-    def visit(symbol_table):
+    def visit(self, symbol_table):
+        print('FUNCTION: ', type(self).__name__)
         return {**symbol_table}
 
 # Statements
@@ -17,17 +18,27 @@ class DeclarationStatement(ASTObject):
         self.value = ast_creator(obj['value'])
 
     def visit(self, symbol_table):
+        symbol_table = super().visit(symbol_table)
+
         return {
             **symbol_table,
             self.name: self.value
         }
 
-class FunctionCallStatement(ASTObject):
+class FunctionCallExpression(ASTObject):
     def __init__(self, obj):
-        self.function = ast_creator(obj['function'])
+
+        if isinstance(obj['function'], str):
+            self.function = Id({
+                'value': obj['function']
+            })
+        else:
+            self.function = ast_creator(obj['function'])
         self.parameters = [ast_creator(x) for x in obj['parameters']]
 
     def visit(self, symbol_table):
+        symbol_table = super().visit(symbol_table)
+
         if isinstance(self.function, Id): #TODO: better way of doing this, I'm not seeing the patter yet
             if self.function.value == 'print':
                 for param in self.parameters:
@@ -56,6 +67,8 @@ class LambdaExpression(ASTObject):
         self.statements = [ast_creator(x) for x in obj['statements']]
 
     def visit(self, symbol_table):
+        symbol_table = super().visit(symbol_table)
+
         for statment in self.statements:
             symbol_table = statment.visit(symbol_table)
         return {**symbol_table}
@@ -89,11 +102,10 @@ class TopLevel(ASTObject):
         if '__main__' not in symbol_table:
             raise ExecutionError('could not find __main__')
 
-        main = FunctionCallStatement({
-            'function': {'type': 'id', 'value': '__main__', },
-            'parameters': [],
+        main = FunctionCallExpression({
+            'function': '__main__',
+            'parameters': []
         })
-
         symbol_table = main.visit(symbol_table)
 
         return {**symbol_table}
@@ -102,8 +114,8 @@ def ast_creator(obj):
     def find_class(type):
         if type == 'declaration_statement': #TODO: find using reflections
             return DeclarationStatement
-        elif type == 'function_call_statement':
-            return FunctionCallStatement
+        elif type == 'function_call_expression':
+            return FunctionCallExpression
         elif type == 'lambda_expression':
             return LambdaExpression
         elif type == 'id':
@@ -111,12 +123,11 @@ def ast_creator(obj):
         elif type == 'string':
             return String
         else:
+            raise ValueError('type not available `{}`'.format(type))
             return None
     clazz = find_class(obj['type'])
     return clazz and clazz(obj)
 
-def start_app(symbol_table):
-    pass
 
 def interpret(ast):
 
