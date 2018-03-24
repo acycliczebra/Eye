@@ -1,85 +1,21 @@
 
 import json
+from runtime.interpreter.expressions import *
 
 class ExecutionError(ValueError):
     pass
 
-class Value:
-    def show(self):
-        pass
+
+
+class PrintFunction(Value):
     def call(self, parameters, symbol_table):
-        pass
+        for param in parameters:
+            if isinstance(param, String):
+                print(param.value, end='')
+        print('')
 
-
-class SymbolTable:
-    def __init__(self, table={}):
-        self.builtin = {}
-        self.table = table
-
-    def add(self, name, value):
-        self.table[name] = value
-
-    def type_of(self, name):
-        pass
-
-    def get(self, name):
-        pass
-
-class ASTObject:
-    def visit(self, symbol_table):
-        print('FUNCTION: ', type(self).__name__)
-        return {**symbol_table}
 
 # Statements
-
-# Expressions
-
-class Expression(ASTObject):
-    def value(self):
-        raise NotImplementedError('abstract method')
-
-class LambdaExpression(Expression):
-    def __init__(self, obj):
-        self.args = obj['args']
-        self.statements = [ast_creator(x) for x in obj['statements']]
-
-    def visit(self, symbol_table):
-        symbol_table = super().visit(symbol_table)
-
-        return {**symbol_table}
-
-    def value(self):
-        class Function(Value):
-            def __init__(self, args, statements):
-                self.args = args
-                self.statements = statements
-            def call(self, parameters, symbol_table):
-                #TODO: check if arg and parameters have the same length
-                stack = {**symbol_table}
-                for arg, param in zip(self.args, parameters):
-                    stack[arg] = param
-
-                for statement in self.statements:
-                    stack = statement.visit(stack)
-
-        return Function(self.args, self.statements)
-
-# Atoms
-
-class Id(ASTObject):
-    def __init__(self, obj):
-        self.value = obj['value']
-
-    def visit(self, symbol_table):
-        return {**symbol_table}
-
-class String(ASTObject):
-    def __init__(self, obj):
-        self.value = obj['value']
-
-    def visit(self, symbol_table):
-        return {**symbol_table}
-
 
 class DeclarationStatement(ASTObject):
     def __init__(self, obj):
@@ -95,19 +31,6 @@ class DeclarationStatement(ASTObject):
             **symbol_table,
             self.name: self.value
         }
-
-def print_function(parameters):
-    for param in parameters:
-        if isinstance(param, String):
-            print(param.value, end='')
-    print('')
-
-class PrintFunction(Value):
-    def call(self, parameters, symbol_table):
-        for param in parameters:
-            if isinstance(param, String):
-                print(param.value, end='')
-        print('')
 
 
 class FunctionCallExpression(ASTObject):
@@ -159,6 +82,7 @@ class TopLevel(ASTObject):
 
         return {**symbol_table}
 
+
 def ast_creator(obj):
     def find_class(type):
         if type == 'declaration_statement': #TODO: find using reflections
@@ -166,11 +90,11 @@ def ast_creator(obj):
         elif type == 'function_call_expression':
             return FunctionCallExpression
         elif type == 'lambda_expression':
-            return LambdaExpression
-        elif type == 'id':
-            return Id
+            return lambda obj: LambdaExpression(obj, lambda statments: [ast_creator(x) for x in statments])
         elif type == 'string':
             return String
+        elif type == 'id':
+            return Id
         else:
             raise ValueError('type not available `{}`'.format(type))
             return None
