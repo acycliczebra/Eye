@@ -74,26 +74,30 @@ class FunctionCallExpression(Expression):
 
     def value(self, symbol_table):
 
-        if self.function.value in symbol_table:
-            stack = {
-                **symbol_table,
-            }
-            f = symbol_table[self.function.value]
-            result = f.call([x.value(symbol_table) for x in self.parameters], stack) #TODO: we are sending in the symbol_table, this is like python where the values are based on what is defined alread. We don't want it like that, or do we?
-
-            return result
-        else:
-            raise ValueError('function not found')
+        function = self.function.value(symbol_table)
+        parameters = [x.value(symbol_table) for x in self.parameters]
+        stack = {
+            **symbol_table
+        }
+        result = function.call(parameters, stack) #TODO: we are sending in the symbol_table, this is like python where the values are based on what is defined alread. We don't want it like that, or do we?
+        return result
 
 
 
 
-class Id(ASTObject):
+class Id(Expression):
     def __init__(self, obj):
-        self.value = obj['value']
+        self._value = obj['value']
 
     def visit(self, symbol_table):
         return {**symbol_table}
+
+    def value(self, symbol_table):
+
+        if self._value not in symbol_table:
+            raise ValueError('result not found')
+        result = symbol_table[self._value]
+        return result
 
 
 
