@@ -49,14 +49,7 @@ class Number(Expression):
 
 class FunctionCallExpression(Expression):
     def __init__(self, obj):
-
-        if isinstance(obj['function'], str):
-            self.function = Id({
-                'value': obj['function']
-            })
-        else:
-            self.function = ast_creator(obj['function'])
-
+        self.function = ast_creator(obj['function'])
         self.parameters = [ast_creator(x) for x in obj['parameters']]
 
     def value(self, symbol_table):
@@ -87,6 +80,21 @@ class Id(Expression):
 
 # Statements
 
+class AssignmentStatement(ASTObject):
+    def __init__(self, obj):
+        if obj['to']['type'] != 'id':
+            raise ValueError('only type of id supported for for lvalues')
+        self.lvalue = obj['to']['value']
+        self.rvalue = obj['value']
+
+    def visit(self, symbol_table):
+        symbol_table = super().visit(symbol_table)
+
+        new_symbol_table = {**symbol_table}
+
+        new_symbol_table[self.lvalue] = ast_creator(self.rvalue).value(symbol_table)
+        return new_symbol_table
+
 class DeclarationStatement(ASTObject):
     def __init__(self, obj):
         self.name = obj['name']
@@ -99,9 +107,6 @@ class DeclarationStatement(ASTObject):
             **symbol_table,
             self.name: ast_creator(self.raw_value).value(symbol_table)
         }
-
-
-
 
 
 # Top Level
@@ -138,6 +143,10 @@ def ast_creator(obj):
         else:
             raise ValueError('type not available `{}`'.format(type))
             return None
+    if isinstance(obj, str):
+        return Id({
+            'value': obj
+        })
     clazz = find_class(obj['type'])
     return clazz and clazz(obj)
 
