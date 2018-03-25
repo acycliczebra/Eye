@@ -20,12 +20,34 @@ class PrintFunction(Value):
         print('')
 
 
-class Add(Value):
+class AddFunction(Value):
     def call(self, parameters, symbol_table):
         if len(parameters) != 2:
             raise ExecutionError('expected 2 parameters')
 
-        return NumberValue(parameters[0] + parameters[1])
+        return parameters[0] + parameters[1]
+
+
+class SubtractFunction(Value):
+    def call(self, parameters, symbol_table):
+        if len(parameters) != 2:
+            raise ExecutionError('expected 2 parameters')
+
+        return parameters[0] - parameters[1]
+
+class MultiplyFunction(Value):
+    def call(self, parameters, symbol_table):
+        if len(parameters) != 2:
+            raise ExecutionError('expected 2 parameters')
+
+        return parameters[0] * parameters[1]
+
+class DivisionFunction(Value):
+    def call(self, parameters, symbol_table):
+        if len(parameters) != 2:
+            raise ExecutionError('expected 2 parameters')
+
+        return parameters[0] / parameters[1]
 
 
 # Statements
@@ -151,7 +173,10 @@ def interpret(ast):
     top_level = TopLevel(ast)
     global_symbols = {
         'print': PrintFunction(),
-        '__add__': Add()
+        '__add__': AddFunction(),
+        '__sub__': SubtractFunction(),
+        '__mul__': MultiplyFunction(),
+        '__div__': DivisionFunction(),
     }
 
     top_level.visit(global_symbols)

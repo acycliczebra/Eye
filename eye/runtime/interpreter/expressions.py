@@ -4,8 +4,14 @@ class Value:
         pass
     def call(self, parameters, symbol_table):
         raise NotImplemented('object not callable')
-    def __add__(self, parameters, symbol_table):
+    def __add__(self, other):
         raise NotImplemented('object not addable')
+    def __sub__(self, other):
+        raise NotImplemented('object not subtractable')
+    def __mul__(self, other):
+        raise NotImplemented('object not multipliable')
+    def __truediv__(self, other):
+        raise NotImplemented('object not dividable')
 
 class FunctionValue(Value):
     def __init__(self, args, statements):
@@ -24,7 +30,13 @@ class NumberValue(Value):
     def __init__(self, value):
         self.value = float(value)
     def __add__(self, other):
-        return self.value + other.value
+        return NumberValue(self.value + other.value)
+    def __sub__(self, other):
+        return NumberValue(self.value - other.value)
+    def __mul__(self, other):
+        return NumberValue(self.value * other.value)
+    def __truediv__(self, other):
+        return NumberValue(self.value / other.value)
 
 class StringValue(Value):
     def __init__(self, value):
