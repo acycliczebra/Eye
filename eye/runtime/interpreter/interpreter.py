@@ -72,23 +72,7 @@ class FunctionCallExpression(Expression):
 
         self.parameters = [ast_creator(x) for x in obj['parameters']]
 
-    def visit(self, symbol_table):
-        symbol_table = super().visit(symbol_table)
-
-        if self.function.value in symbol_table:
-            stack = {
-                **symbol_table,
-            }
-            f = symbol_table[self.function.value]
-            parameters = [x.value(symbol_table) for x in self.parameters]
-            f.call(parameters, stack) #TODO: we are sending in the symbol_table, this is like python where the values are based on what is defined alread. We don't want it like that, or do we?
-            #TODO: handle return statment
-        else:
-            raise ValueError('function not found')
-        return {**symbol_table}
-
     def value(self, symbol_table):
-        symbol_table = super().visit(symbol_table)
 
         if self.function.value in symbol_table:
             stack = {

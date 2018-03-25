@@ -58,15 +58,18 @@ class Expression(ASTObject):
     def value(self, symbol_table):
         raise NotImplementedError('abstract method `' + str(type(self)) + '`')
 
-class LambdaExpression(Expression):
-    def __init__(self, obj, statment_cb):
-        self.args = obj['args']
-        self.statements = statment_cb(obj['statements'])
 
     def visit(self, symbol_table):
         symbol_table = super().visit(symbol_table)
 
+        val = self.value(symbol_table)
+
         return {**symbol_table}
+
+class LambdaExpression(Expression):
+    def __init__(self, obj, statment_cb):
+        self.args = obj['args']
+        self.statements = statment_cb(obj['statements'])
 
     def value(self, symbol_table):
 
@@ -76,18 +79,12 @@ class String(Expression):
     def __init__(self, obj):
         self._value = obj['value']
 
-    def visit(self, symbol_table):
-        return {**symbol_table}
-
     def value(self, symbol_table):
         return StringValue(self._value)
 
 class Number(Expression):
     def __init__(self, obj):
         self._value = obj['value']
-
-    def visit(self, symbol_table):
-        return {**symbol_table}
 
     def value(self, symbol_table):
         return NumberValue(self._value)

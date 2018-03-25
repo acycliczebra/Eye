@@ -5,6 +5,7 @@ from runtime import interpreter
 
 test = '''def __main__ [args]{
     print("2 + 2 / 2")
+    print(2 + 2 / 2)
 }
 '''
 
