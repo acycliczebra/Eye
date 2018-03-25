@@ -127,19 +127,14 @@ class TopLevel(ASTObject):
 
 
 def ast_creator(obj):
+    def to_camel_case(snake_str):
+        components = snake_str.split('_')
+        return ''.join(x.title() for x in components)
+
     def find_class(type):
-        if type == 'declaration_statement': #TODO: find using reflections
-            return DeclarationStatement
-        elif type == 'function_call_expression':
-            return FunctionCallExpression
-        elif type == 'lambda_expression':
-            return LambdaExpression
-        elif type == 'string':
-            return String
-        elif type == 'number':
-            return Number
-        elif type == 'id':
-            return Id
+        class_name = to_camel_case(type)
+        if class_name in globals():
+            return globals()[class_name]
         else:
             raise ValueError('type not available `{}`'.format(type))
             return None
