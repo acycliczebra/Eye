@@ -1,7 +1,7 @@
 
 class Value:
     def show(self):
-        pass
+        raise NotImplemented('object not printable')
     def call(self, parameters, symbol_table):
         raise NotImplemented('object not callable')
     def __add__(self, other):
@@ -29,6 +29,8 @@ class FunctionValue(Value):
 class NumberValue(Value):
     def __init__(self, value):
         self.value = float(value)
+    def show(self):
+        return self.value
     def __add__(self, other):
         return NumberValue(self.value + other.value)
     def __sub__(self, other):
@@ -41,6 +43,8 @@ class NumberValue(Value):
 class StringValue(Value):
     def __init__(self, value):
         self.value = value
+    def show(self):
+        return self.value
     def call(self, parameters, symbol_table):
         raise ValueError('object not callable')
 

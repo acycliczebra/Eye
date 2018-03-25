@@ -10,13 +10,7 @@ class ExecutionError(ValueError):
 class PrintFunction(Value):
     def call(self, parameters, symbol_table):
         for param in parameters:
-            if isinstance(param, StringValue):
-                print(param.value, end='')
-            elif isinstance(param, NumberValue):
-                print(param.value, end='')
-            else:
-                print(param)
-                raise ExecutionError('must be a string')
+            print(param.show(), end='')
         print('')
 
 
