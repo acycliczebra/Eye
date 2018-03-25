@@ -1,64 +1,51 @@
 
 import json
-from runtime.interpreter.expressions import *
+from runtime.interpreter.values import *
 
 class ExecutionError(ValueError):
     pass
 
 
-
-class PrintFunction(Value):
-    def call(self, parameters, symbol_table):
-        for param in parameters:
-            print(param.show(), end='')
-        print('')
+class ASTObject:
+    def visit(self, symbol_table):
+        return {**symbol_table}
 
 
-class AddFunction(Value):
-    def call(self, parameters, symbol_table):
-        if len(parameters) != 2:
-            raise ExecutionError('expected 2 parameters')
+class Expression(ASTObject):
+    def value(self, symbol_table):
+        raise NotImplementedError('abstract method `' + str(type(self)) + '`')
 
-        return parameters[0] + parameters[1]
-
-
-class SubtractFunction(Value):
-    def call(self, parameters, symbol_table):
-        if len(parameters) != 2:
-            raise ExecutionError('expected 2 parameters')
-
-        return parameters[0] - parameters[1]
-
-class MultiplyFunction(Value):
-    def call(self, parameters, symbol_table):
-        if len(parameters) != 2:
-            raise ExecutionError('expected 2 parameters')
-
-        return parameters[0] * parameters[1]
-
-class DivisionFunction(Value):
-    def call(self, parameters, symbol_table):
-        if len(parameters) != 2:
-            raise ExecutionError('expected 2 parameters')
-
-        return parameters[0] / parameters[1]
-
-
-# Statements
-
-class DeclarationStatement(ASTObject):
-    def __init__(self, obj):
-        self.name = obj['name']
-        self.raw_value = obj['value']
 
     def visit(self, symbol_table):
         symbol_table = super().visit(symbol_table)
 
-        return {
-            **symbol_table,
-            self.name: ast_creator(self.raw_value).value(symbol_table)
-        }
+        val = self.value(symbol_table)
 
+        return {**symbol_table}
+
+class LambdaExpression(Expression):
+    def __init__(self, obj):
+        self.args = obj['args']
+        statement_cb = lambda statments: [ast_creator(x) for x in statments]
+        self.statements = statement_cb(obj['statements'])
+
+    def value(self, symbol_table):
+
+        return FunctionValue(self.args, self.statements)
+
+class String(Expression):
+    def __init__(self, obj):
+        self._value = obj['value']
+
+    def value(self, symbol_table):
+        return StringValue(self._value)
+
+class Number(Expression):
+    def __init__(self, obj):
+        self._value = obj['value']
+
+    def value(self, symbol_table):
+        return NumberValue(self._value)
 
 class FunctionCallExpression(Expression):
     def __init__(self, obj):
@@ -83,8 +70,6 @@ class FunctionCallExpression(Expression):
         return result
 
 
-
-
 class Id(Expression):
     def __init__(self, obj):
         self._value = obj['value']
@@ -98,6 +83,24 @@ class Id(Expression):
             raise ValueError('result not found')
         result = symbol_table[self._value]
         return result
+
+
+# Statements
+
+class DeclarationStatement(ASTObject):
+    def __init__(self, obj):
+        self.name = obj['name']
+        self.raw_value = obj['value']
+
+    def visit(self, symbol_table):
+        symbol_table = super().visit(symbol_table)
+
+        return {
+            **symbol_table,
+            self.name: ast_creator(self.raw_value).value(symbol_table)
+        }
+
+
 
 
 
@@ -130,7 +133,7 @@ def ast_creator(obj):
         elif type == 'function_call_expression':
             return FunctionCallExpression
         elif type == 'lambda_expression':
-            return lambda obj: LambdaExpression(obj, lambda statments: [ast_creator(x) for x in statments])
+            return LambdaExpression
         elif type == 'string':
             return String
         elif type == 'number':

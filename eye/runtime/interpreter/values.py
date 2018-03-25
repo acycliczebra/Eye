@@ -49,44 +49,42 @@ class StringValue(Value):
         raise ValueError('object not callable')
 
 
-class ASTObject:
-    def visit(self, symbol_table):
-        return {**symbol_table}
+
+class PrintFunction(Value):
+    def call(self, parameters, symbol_table):
+        for param in parameters:
+            print(param.show(), end='')
+        print('')
 
 
-class Expression(ASTObject):
-    def value(self, symbol_table):
-        raise NotImplementedError('abstract method `' + str(type(self)) + '`')
+class AddFunction(Value):
+    def call(self, parameters, symbol_table):
+        if len(parameters) != 2:
+            raise ExecutionError('expected 2 parameters')
+
+        return parameters[0] + parameters[1]
 
 
-    def visit(self, symbol_table):
-        symbol_table = super().visit(symbol_table)
+class SubtractFunction(Value):
+    def call(self, parameters, symbol_table):
+        if len(parameters) != 2:
+            raise ExecutionError('expected 2 parameters')
 
-        val = self.value(symbol_table)
+        return parameters[0] - parameters[1]
 
-        return {**symbol_table}
+class MultiplyFunction(Value):
+    def call(self, parameters, symbol_table):
+        if len(parameters) != 2:
+            raise ExecutionError('expected 2 parameters')
 
-class LambdaExpression(Expression):
-    def __init__(self, obj, statment_cb):
-        self.args = obj['args']
-        self.statements = statment_cb(obj['statements'])
+        return parameters[0] * parameters[1]
 
-    def value(self, symbol_table):
+class DivisionFunction(Value):
+    def call(self, parameters, symbol_table):
+        if len(parameters) != 2:
+            raise ExecutionError('expected 2 parameters')
 
-        return FunctionValue(self.args, self.statements)
+        return parameters[0] / parameters[1]
 
-class String(Expression):
-    def __init__(self, obj):
-        self._value = obj['value']
-
-    def value(self, symbol_table):
-        return StringValue(self._value)
-
-class Number(Expression):
-    def __init__(self, obj):
-        self._value = obj['value']
-
-    def value(self, symbol_table):
-        return NumberValue(self._value)
 
 
