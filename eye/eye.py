@@ -3,8 +3,8 @@ import compiler
 import json
 from runtime import interpreter
 
-test = r'''def __main__ [args]{
-    print("Hello World")
+test = '''def __main__ [args]{
+    print(2 + 2)
 }
 '''
 

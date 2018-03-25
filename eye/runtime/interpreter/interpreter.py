@@ -10,9 +10,22 @@ class ExecutionError(ValueError):
 class PrintFunction(Value):
     def call(self, parameters, symbol_table):
         for param in parameters:
-            if isinstance(param, String):
+            if isinstance(param, StringValue):
                 print(param.value, end='')
+            elif isinstance(param, NumberValue):
+                print(param.value, end='')
+            else:
+                print(param)
+                raise ExecutionError('must be a string')
         print('')
+
+
+class Add(Value):
+    def call(self, parameters, symbol_table):
+        if len(parameters) != 2:
+            raise ExecutionError('expected 2 parameters')
+
+        return NumberValue(parameters[0] + parameters[1])
 
 
 # Statements
@@ -20,20 +33,18 @@ class PrintFunction(Value):
 class DeclarationStatement(ASTObject):
     def __init__(self, obj):
         self.name = obj['name']
-        self.value = ast_creator(obj['value']).value()
+        self.raw_value = obj['value']
 
     def visit(self, symbol_table):
         symbol_table = super().visit(symbol_table)
 
-        print('value: ', self.value)
-
         return {
             **symbol_table,
-            self.name: self.value
+            self.name: ast_creator(self.raw_value).value(symbol_table)
         }
 
 
-class FunctionCallExpression(ASTObject):
+class FunctionCallExpression(Expression):
     def __init__(self, obj):
 
         if isinstance(obj['function'], str):
@@ -53,12 +64,37 @@ class FunctionCallExpression(ASTObject):
                 **symbol_table,
             }
             f = symbol_table[self.function.value]
-            print('ISINSTANCE OF VALUE: ', isinstance(f, Value))
-            f.call(self.parameters, stack) #TODO: we are sending in the symbol_table, this is like python where the values are based on what is defined alread. We don't want it like that, or do we?
+            parameters = [x.value(symbol_table) for x in self.parameters]
+            f.call(parameters, stack) #TODO: we are sending in the symbol_table, this is like python where the values are based on what is defined alread. We don't want it like that, or do we?
             #TODO: handle return statment
         else:
-            ValueError('function not found')
+            raise ValueError('function not found')
         return {**symbol_table}
+
+    def value(self, symbol_table):
+        symbol_table = super().visit(symbol_table)
+
+        if self.function.value in symbol_table:
+            stack = {
+                **symbol_table,
+            }
+            f = symbol_table[self.function.value]
+            result = f.call([x.value(symbol_table) for x in self.parameters], stack) #TODO: we are sending in the symbol_table, this is like python where the values are based on what is defined alread. We don't want it like that, or do we?
+
+            return result
+        else:
+            raise ValueError('function not found')
+
+
+
+
+class Id(ASTObject):
+    def __init__(self, obj):
+        self.value = obj['value']
+
+    def visit(self, symbol_table):
+        return {**symbol_table}
+
 
 
 # Top Level
@@ -93,6 +129,8 @@ def ast_creator(obj):
             return lambda obj: LambdaExpression(obj, lambda statments: [ast_creator(x) for x in statments])
         elif type == 'string':
             return String
+        elif type == 'number':
+            return Number
         elif type == 'id':
             return Id
         else:
@@ -113,6 +151,7 @@ def interpret(ast):
     top_level = TopLevel(ast)
     global_symbols = {
         'print': PrintFunction(),
+        '__add__': Add()
     }
 
     top_level.visit(global_symbols)
