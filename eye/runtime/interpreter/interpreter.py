@@ -103,6 +103,9 @@ class DeclarationStatement(ASTObject):
     def visit(self, symbol_table):
         symbol_table = super().visit(symbol_table)
 
+        if self.name in symbol_table:
+            raise ExecutionError('already defined')
+
         return {
             **symbol_table,
             self.name: ast_creator(self.raw_value).value(symbol_table)
