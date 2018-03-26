@@ -179,6 +179,48 @@ class TestList(unittest.TestCase):
 
         self.assertEqual(result, expected)
 
+    def test_empty_list(self):
+        expected = {
+            "version": "0.0.1",
+            "statements": [
+                {
+                    "type": "declaration_statement",
+                    "name": "__main__",
+                    "value": {
+                        "type": "lambda_expression",
+                        "args": [
+                            "args"
+                        ],
+                        "statements": [
+                            {
+                                "type": "function_call_expression",
+                                "function": "print",
+                                "parameters": [
+                                    {
+                                        "type": "list",
+                                        "value": [
+                                        ]
+                                    }
+                                ]
+                            }
+                        ]
+                    }
+                }
+            ]
+        }
+
+        test = '''
+        def __main__ [args]{
+            print([])
+        }
+        '''
+        #logging.basicConfig(level=logging.DEBUG)
+        result = compiler.compile(test)
+
+
+        self.assertEqual(result, expected)
+
+
 
     def test_from_function_various_types(self):
         expected = {

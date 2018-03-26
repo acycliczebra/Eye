@@ -315,9 +315,22 @@ def accept_bracketted_expression(tokens):
 
 @debug_accept
 def accept_list_expression(tokens):
+
+    # Test for empty list
     tokens, expression = all_of(
         supress(accept_left_square),
-        interlace( #TODO: maybe id
+        supress(accept_right_square),
+    )(tokens)
+
+    if expression != Tokens.NONE:
+        return tokens, {
+            "type" : "list",
+            "value": []
+        }
+
+    tokens, expression = all_of(
+        supress(accept_left_square),
+        interlace(
             accept_expression,
             accept_comma
         ),
