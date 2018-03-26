@@ -263,7 +263,7 @@ def accept_function_args(tokens):
 def accept_lambda_expression(tokens):
     tokens, result = all_of(
         accept_function_args,
-        supress(accept_left_curly),
+        supress(accept_left_curly), #TODO: accept it without curly brackets, if one expression
         accept_statement_list, #TODO: maybe statement_list
         supress(accept_right_curly),
     )(tokens)
@@ -313,12 +313,44 @@ def accept_bracketted_expression(tokens):
 
     return tokens, expression
 
+@debug_accept
+def accept_list_expression(tokens):
+    tokens, expression = all_of(
+        supress(accept_left_square),
+        interlace( #TODO: maybe id
+            accept_expression,
+            accept_comma
+        ),
+        supress(accept_right_square),
+    )(tokens)
+
+    if expression == Tokens.NONE:
+        return tokens, Tokens.NONE
+
+    [expression] = expression
+
+    return tokens, {
+        "type" : "list",
+        "value": expression
+    }
+
 
 @debug_accept
 def accept_atom_expression(tokens):
 
     tokens, expression = any_of(
         accept_lambda_expression,
+        accept_list_expression,
+        #accept_array_expression,
+        #accept_map_expression,
+        #accept_set_expression,
+        #accept_object_expression,
+        #accept_class_expression,
+
+        #if_expression
+        #for_expression
+        #while_expression
+
         accept_id,
         accept_string_literal,
         accept_number,
