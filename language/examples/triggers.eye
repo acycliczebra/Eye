@@ -12,8 +12,8 @@ import piping *
 __trigger__ = any(
     cron("* * * * *"),
     all(
-        issued("script1"),
-        issued("script2", 10), # 10 new items from
+        new_result("script1"),
+        new_result("script2", 10), # 10 new items from
     ),
     listen("broadcasting_this"), #TODO: this needs work
 )
