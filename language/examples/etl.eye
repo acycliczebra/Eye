@@ -1,5 +1,5 @@
 
-__script = [args] {
+__script__ = [args] {
   # read excel file
   frame = read_excel(args.filename)
 

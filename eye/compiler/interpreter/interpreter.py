@@ -1,6 +1,6 @@
 
 import json
-from runtime.interpreter.values import *
+from compiler.interpreter.values import *
 
 class ExecutionError(ValueError):
     pass
@@ -13,7 +13,7 @@ class ASTObject:
 
 class Expression(ASTObject):
     def value(self, symbol_table):
-        raise NotImplementedError('abstract method `' + str(type(self)) + '`')
+        raise NotImplementedError('abstract method `{}`'.format(type(self)))
 
 
     def visit(self, symbol_table):

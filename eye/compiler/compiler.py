@@ -3,6 +3,7 @@ import json
 
 from . import tokenizer
 from . import parser
+from . import interpreter
 
 class LexerError(Exception):
     pass
@@ -64,3 +65,8 @@ def compile(s):
     ast = parse(tokens)
     #return json.dumps(ast, indent=2)
     return ast
+
+def run(s):
+    ast = compile(s)
+    ret_val = interpreter.interpret(ast)
+    return ret_val
