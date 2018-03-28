@@ -1,5 +1,5 @@
 
-import compiler
+import eyescript as compiler
 import json
 
 test = '''def __main__ [args]{

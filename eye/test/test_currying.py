@@ -2,7 +2,7 @@ import logging
 import json
 import unittest
 
-import compiler
+import eyescript as compiler
 
 
 class TestCurrying(unittest.TestCase):

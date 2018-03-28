@@ -1,6 +1,6 @@
 
 import json
-from compiler.interpreter.values import *
+from .values import *
 
 class ExecutionError(ValueError):
     pass
