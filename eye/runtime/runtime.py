@@ -97,6 +97,46 @@ class EyeScript(Script):
     pass
 
 
+class TaskRunner:
+    def __init__(self, name, script, scheduler):
+        def runner(name, script):
+            while True:
+                arg = scheduler.wait_for_input(name)
+                res = script.run(arg)
+                scheduler.dispatch_output(name, res)
+
+                if scheduler.is_finished():
+                    break
+
+        self.runner = lambda: runner(name, script)
+
+
+    def start(self):
+        self.runner()
+        pass
+
+#TODO: this looks like a consumer producer problem
+class Scheduler:
+    def __init__(self, scripts):
+        self.scripts = scripts
+
+    def run(self):
+
+        processes = {}
+        for name, script for self.scripts.items():
+            runner = TaskRunner(name, script, self)
+            processes[name] = runner
+
+    def is_finished(self):
+        return False
+
+    def wait_for_input(self, name):
+        pass
+
+    def dispatch_output(self, name, result):
+        pass
+
+
 
 class RuntimeEngine:
     def __init__(self, language='.py'):
@@ -119,7 +159,7 @@ class RuntimeEngine:
 
         self.scripts[name] = self.ScriptLoader(script, trigger, execute)
 
-    def resolve_dependencies(self):
+    def check_dependencies(self):
 
         available_names = set(self.scripts.keys())
 
@@ -131,35 +171,9 @@ class RuntimeEngine:
 
         #2. test for circular dependencies
         #TODO: pirate CLRS
-
-        return {
-            "script1" : {
-                "script2" : {
-
-                }
-            }
-        }
+        return True
 
     def execute(self):
 
-
-        db_hack = DD(lambda: {})
-        scripts = self.resolve_dependencies()
-
-        def execute_hack(scripts_to_run):
-            for script_name, dependencies in scripts_to_run.items():
-                arg = db_hack[script_name]
-                result = self.scripts[script_name].run(arg)
-                for dep in dependencies.keys():
-                    new_arg = self.scripts[dep].arg(script_name, result)
-                    db_hack[dep] = {
-                        **db_hack[dep],
-                        **new_arg
-                    }
-
-                execute_hack(dependencies)
-
-
-        while True:
-            time.sleep(5) #TODO: remove hack
-            execute_hack(scripts)
+        res = Scheduler(self.scripts).run()
+        return res
